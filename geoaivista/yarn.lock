@@ -1947,7 +1947,7 @@ react-bootstrap@^2.10.2:
     uncontrollable "^7.2.1"
     warning "^4.0.3"
 
-react-dom@^18.2.0, react-dom@>=16.14.0, react-dom@>=16.6.0, react-dom@>=16.8, react-dom@>=18.0.0:
+react-dom@*, react-dom@^18.2.0, react-dom@>=16.14.0, react-dom@>=16.6.0, react-dom@>=16.8, react-dom@>=18.0.0:
   version "18.3.1"
   resolved "https://registry.npmjs.org/react-dom/-/react-dom-18.3.1.tgz"
   integrity sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==
@@ -2018,7 +2018,12 @@ react-use-image@^0.2.3:
   resolved "https://registry.npmjs.org/react-use-image/-/react-use-image-0.2.3.tgz"
   integrity sha512-PWWvj3sZkcB1ydig3kSym+JHK7zOMXh0W+epc5QCxzVBTnMFVXUg3zGH+19rWVO/qD2rTy7gMZuk/WGmE75eeA==
 
-"react@^16.8.0 || ^17.0.0-rc.1 || ^18.0.0", react@^18.2.0, react@^18.3.1, react@>=0.14.0, react@>=15.0.0, react@>=16.14.0, react@>=16.3, react@>=16.6.0, react@>=16.8, react@>=16.8.0, react@>=18.0, react@>=18.0.0:
+react-zoom-pan-pinch@^3.6.1:
+  version "3.6.1"
+  resolved "https://registry.npmjs.org/react-zoom-pan-pinch/-/react-zoom-pan-pinch-3.6.1.tgz"
+  integrity sha512-SdPqdk7QDSV7u/WulkFOi+cnza8rEZ0XX4ZpeH7vx3UZEg7DoyuAy3MCmm+BWv/idPQL2Oe73VoC0EhfCN+sZQ==
+
+react@*, "react@^16.8.0 || ^17.0.0-rc.1 || ^18.0.0", react@^18.2.0, react@^18.3.1, react@>=0.14.0, react@>=15.0.0, react@>=16.14.0, react@>=16.3, react@>=16.6.0, react@>=16.8, react@>=16.8.0, react@>=18.0, react@>=18.0.0:
   version "18.3.1"
   resolved "https://registry.npmjs.org/react/-/react-18.3.1.tgz"
   integrity sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==

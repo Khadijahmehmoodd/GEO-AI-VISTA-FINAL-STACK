@@ -1,224 +1,475 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import styles from "../../styles/PreviewMap.module.css";
-import mapPreviewImage from '../../assets/UserInput.jpg'; // Import the image
-import { useUser } from '../../context/UserContext';
+import mapPreviewImage from "../../assets/UserInput.jpg"; // Default fallback image
+import { useUser } from "../../context/UserContext";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 const PreviewPage = () => {
-  const { token, setToken, loggedIn, setLoggedIn } = useUser();
+  const {
+    token,
+    setOriginalImageDimensions,
+    setOriginalImageUrl,
+    setOriginalImageData,
+    originalImageData,
+  } = useUser();
   const navigate = useNavigate();
   const [mapName, setMapName] = useState("");
-  const [zoom, setZoom] = useState(1);
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
   const [isFileSaved, setIsFileSaved] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
-  const imageRef = useRef(null);
-
-
-
   const [maskImageUrl, setMaskImageUrl] = useState(null);
+  const imageRef = useRef(null);
+  const [imageDownloaded, setImageDownloaded] = useState(false);
 
-    useEffect(() => {
-        // Retrieve the Blob URL from sessionStorage
-        const blobUrl = sessionStorage.getItem("maskBlobUrl");
-        setMaskImageUrl(blobUrl);
-},[]);
+  useEffect(() => {
+    const blobUrl = sessionStorage.getItem("maskBlobUrl");
 
-  const handleRequirementForm = () => {
-    if (isFileSaved) {
-      navigate('/gallery', { state: { image: mapPreviewImage, name: mapName } });
+    if (blobUrl) {
+      fetch(blobUrl)
+        .then((response) => response.blob())
+        .then((imageBlob) => {
+          const imageUrl = URL.createObjectURL(imageBlob);
+          const img = new Image();
+          img.src = imageUrl;
+
+          setOriginalImageData(imageBlob);
+          setOriginalImageUrl(imageUrl);
+
+          img.onload = () => {
+            setOriginalImageDimensions({
+              width: img.width,
+              height: img.height,
+            });
+
+            setMaskImageUrl(imageUrl);
+
+            if (!imageDownloaded) {
+              downloadImage(imageBlob);
+              setImageDownloaded(true);
+            }
+          };
+        })
+        .catch((error) => {
+          console.error("Error fetching the image from sessionStorage:", error);
+        });
     } else {
-      setPopupMessage("Please save the file first.");
-      setShowPopup(true);
-      setTimeout(() => {
-        setShowPopup(false);
-      }, 2000);
+      console.error("No image URL found in sessionStorage.");
     }
-  };
+  }, [
+    setOriginalImageDimensions,
+    setOriginalImageUrl,
+    setOriginalImageData,
+    imageDownloaded,
+  ]);
 
-  const handleRegenerate = () => {
-    // Logic for regenerating the map preview
-    console.log("Regenerate button clicked");
+  const downloadImage = (blob) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "downloaded_image.png";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleSaveImage = async () => {
     if (mapName.trim() === "") {
       setPopupMessage("Please enter the file name first.");
       setShowPopup(true);
-      setTimeout(() => {
-        setShowPopup(false);
-      }, 2000);
+      setTimeout(() => setShowPopup(false), 2000);
     } else {
-      const imageElement = imageRef.current;
-      if (!imageElement) {
-        throw new Error("Image element not found.");
-      }
-
-      // Get the image URL from the src attribute (it could be a Blob URL)
-      const imageUrl = imageElement.src;
-
-      // Fetch the image as a Blob
-      const response = await fetch(imageUrl);
-      const imageBlob = await response.blob();
-      // Convert Blob to File
-  const imageFile = new File([imageBlob], `${mapName}.png`, { type: "image/png" });
-
-      // Prepare form data to send to backend
-      const formData = new FormData();
-  formData.append("name", mapName); // Append the file name
-      formData.append("image",imageFile); // Append the image Blob
-
-      // Send the form data to the backend (assuming your backend is on the same server)
-      const result = await fetch("http://localhost:5000/api/images", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`, // Include token in headers
-          },
-          body: formData, // Pass FormData object as body
+      try {
+        // Fetch the image blob from maskImageUrl
+        const response = await fetch(maskImageUrl);
+        if (!response.ok) throw new Error("Failed to fetch image");
+  
+        const imageBlob = await response.blob();
+        const imageFile = new File([imageBlob], `${mapName}.png`, {
+          type: "image/png",
         });
-
-      if (result.ok) {
+  
+        // Create form data
+        const formData = new FormData();
+        formData.append("name", mapName);
+        formData.append("image", imageFile);
+        formData.append("type", "generatedImage"); // Set the image type
+  
+        // Post the form data to the backend using Axios
+        const uploadResponse = await axios.post(
+          "http://localhost:5000/api/images/generated",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`, // Ensure token is available
+            },
+          }
+        );
+  
+        // Handle the successful response
+        console.log("Image uploaded successfully:", uploadResponse.data);
         setIsFileSaved(true);
         setPopupMessage("File Saved!");
-      } else {
-        setPopupMessage("Error saving the file")}
-
-      // Logic for saving the image with the specified name
-      console.log("Save Image clicked", mapName);
-      setIsFileSaved(true);
-      setPopupMessage("File Saved!");
+  
+      } catch (error) {
+        // Catch both fetch and axios errors
+        console.error("Error uploading image:", error.response?.data || error.message);
+        setPopupMessage("Error saving the file");
+      }
+  
       setShowPopup(true);
-      setTimeout(() => {
-        setShowPopup(false);
-      }, 2000);
+      setTimeout(() => setShowPopup(false), 2000);
     }
   };
   
-
-  const handleZoomIn = () => {
-    setZoom((prevZoom) => Math.min(prevZoom + 0.1, 3)); // Max zoom level of 3
-  };
-
-  const handleZoomOut = () => {
-    setZoom((prevZoom) => Math.max(prevZoom - 0.1, 1)); // Min zoom level of 1
-  };
-
-  const handleMouseDown = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-    setInitialPosition({ x: e.clientX - position.x, y: e.clientY - position.y });
-  };
-
-  const handleMouseMove = (e) => {
-    if (isDragging) {
-      e.preventDefault();
-      setPosition({ x: e.clientX - initialPosition.x, y: e.clientY - initialPosition.y });
+  const handleRequirementForm = () => {
+    if (isFileSaved) {
+      navigate("/gallery", {
+        state: { image: mapPreviewImage, name: mapName },
+      });
+    } else {
+      setPopupMessage("Please save the file first.");
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 2000);
     }
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
+  const handleRegenerate = () => {
+    navigate("/regenerate");
   };
-  // const handleRooftopDetection = () => {
-    
-  //     navigate("rooftopdetection");  // Navigate directly to the route
-    
-    
-    
-  // };
-
-
-  const handleWheel = (e) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setZoom((prevZoom) => Math.min(Math.max(prevZoom + delta, 1), 3)); // Limit zoom between 1 and 3
-  };
-
-  useEffect(() => {
-    const imageElement = imageRef.current;
-    if (imageElement) {
-      imageElement.addEventListener('wheel', handleWheel);
-      return () => {
-        imageElement.removeEventListener('wheel', handleWheel);
-      };
-    }
-  }, []);
 
   return (
     <div className={styles.previewContainer}>
       <div className={styles.content}>
         <h1 className={styles.previewTitle}>Preview Map</h1>
-        <div
-          className={styles.mapPreview}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-        >
-       {maskImageUrl && (
-                <img
-                src={maskImageUrl}
-                alt="Map Preview"
-                className={styles.mapImage}
-                ref={imageRef}
-                style={{
-                  transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
-                  transformOrigin: 'center center',
-                }}
-              />
-            )}
-         {
-          !maskImageUrl && (
-            <img
-            src={mapPreviewImage}
-            alt="Map Preview"
-            className={styles.mapImage}
-            ref={imageRef}
-            style={{
-              transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
-              transformOrigin: 'center center',
-            }}
-          />
-          )
-         }
-        </div>
-        <div className={styles.newControls}>
-          <input
-            type="text"
-            placeholder="Enter map name"
-            value={mapName}
-            onChange={(e) => setMapName(e.target.value)}
-            className={styles.mapNameInput}
-          />
-          <button onClick={handleSaveImage} className={styles.saveButton}>
-            Save Image
-          </button>
-          <button onClick={handleZoomIn} className={styles.zoomButton}>
-            Zoom In
-          </button>
-          <button onClick={handleZoomOut} className={styles.zoomButton}>
-            Zoom Out
-          </button>
-        </div>
+
+        {/* TransformWrapper for Zoom, Pan, and Pinch functionality */}
+        <TransformWrapper initialScale={1}>
+          {({ zoomIn, zoomOut, resetTransform }) => (
+            <>
+              <div className={styles.mapPreview}>
+                <TransformComponent>
+                  {maskImageUrl ? (
+                    <img
+                      src={maskImageUrl}
+                      alt="Map Preview"
+                      className={styles.mapImage}
+                      ref={imageRef}
+                      style={{
+                        width: "100%",
+                        height: "auto",
+                        // maxWidth: "100%", // Image should not exceed the width of the container
+                        // maxHeight: "100vh", //does not exceed
+                        // objectFit: "contain",
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={mapPreviewImage}
+                      alt="Map Preview"
+                      className={styles.mapImage}
+                      style={{
+                        width: "100%", // Ensure fallback image also respects the aspect ratio
+                        height: "auto",
+                        // maxWidth: "100%",
+                        // maxHeight: "100vh",
+                        // objectFit: "contain",
+                      }}
+                    />
+                  )}
+                </TransformComponent>
+              </div>
+
+              {/* Updated horizontal control buttons */}
+              <div className={styles.horizontalControls}>
+                <button onClick={() => zoomIn()} className={styles.zoomButton}>
+                  Zoom In
+                </button>
+                <button onClick={() => zoomOut()} className={styles.zoomButton}>
+                  Zoom Out
+                </button>
+                <button
+                  onClick={() => resetTransform()}
+                  className={styles.zoomButton}
+                >
+                  Reset
+                </button>
+                <input
+                  type="text"
+                  placeholder="Enter map name"
+                  value={mapName}
+                  onChange={(e) => setMapName(e.target.value)}
+                  className={styles.mapNameInput}
+                />
+                <button onClick={handleSaveImage} className={styles.saveButton}>
+                  Save Image
+                </button>
+              </div>
+            </>
+          )}
+        </TransformWrapper>
       </div>
+
       <div className={styles.buttonContainer}>
-        <button onClick={handleRequirementForm} className={styles.galleryButton}>
+        <button
+          onClick={handleRequirementForm}
+          className={styles.galleryButton}
+        >
           Gallery
         </button>
         <button onClick={handleRegenerate} className={styles.regenerateButton}>
           Regenerate
         </button>
-        {/* <button onClick={handleRooftopDetection} className={styles.regenerateButton}>
-          Detect
-        </button> */}
       </div>
+
       {showPopup && <div className={styles.popup}>{popupMessage}</div>}
     </div>
   );
 };
 
 export default PreviewPage;
+// import React, { useState, useRef, useEffect } from "react";
+// import { useNavigate } from "react-router-dom";
+// import styles from "../../styles/PreviewMap.module.css";
+// import mapPreviewImage from "../../assets/UserInput.jpg"; // Default fallback image
+// import { useUser } from "../../context/UserContext";
+// import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+
+// const PreviewPage = () => {
+//   const {
+//     token,
+//     setOriginalImageDimensions,
+//     setOriginalImageUrl,
+//     setOriginalImageData,
+//     originalImageData, // Access original image data
+//   } = useUser();
+//   const navigate = useNavigate();
+//   const [mapName, setMapName] = useState("");
+//   const [showPopup, setShowPopup] = useState(false);
+//   const [popupMessage, setPopupMessage] = useState("");
+//   const [isFileSaved, setIsFileSaved] = useState(false);
+//   const [maskImageUrl, setMaskImageUrl] = useState(null);
+//   const [imageDimensions, setImageDimensions] = useState({
+//     width: 0,
+//     height: 0,
+//   });
+//   const [scaleFactor, setScaleFactor] = useState(1);
+//   const imageRef = useRef(null);
+//   const [imageDownloaded, setImageDownloaded] = useState(false); // New state to prevent multiple downloads
+
+//   useEffect(() => {
+//     // Retrieve the Blob URL from sessionStorage
+//     const blobUrl = sessionStorage.getItem("maskBlobUrl");
+
+//     if (blobUrl) {
+//       // Fetch the image Blob from the Blob URL
+//       fetch(blobUrl)
+//         .then((response) => response.blob())
+//         .then((imageBlob) => {
+//           const imageUrl = URL.createObjectURL(imageBlob);
+//           const img = new Image();
+//           img.src = imageUrl;
+
+//           // Store image data and URL in context
+//           setOriginalImageData(imageBlob);
+//           setOriginalImageUrl(imageUrl);
+
+//           img.onload = () => {
+//             const maxWidth = 800; // Adjust width and height based on your container
+//             const maxHeight = 600;
+//             let scale = 1;
+
+//             // Save original image dimensions to context
+//             setOriginalImageDimensions({
+//               width: img.width,
+//               height: img.height,
+//             });
+
+//             if (img.width > maxWidth) {
+//               scale = maxWidth / img.width;
+//             }
+//             if (img.height > maxHeight) {
+//               scale = Math.min(scale, maxHeight / img.height);
+//             }
+
+//             setMaskImageUrl(imageUrl);
+//             setImageDimensions({
+//               width: img.width * scale,
+//               height: img.height * scale,
+//             });
+//             setScaleFactor(scale); // Save scale factor for use later if needed
+
+//             // Trigger automatic download here
+//             if (!imageDownloaded) {
+//               downloadImage(imageBlob);
+//               setImageDownloaded(true); // Prevent multiple downloads
+//             }
+//           };
+//         })
+//         .catch((error) => {
+//           console.error("Error fetching the image from sessionStorage:", error);
+//         });
+//     } else {
+//       console.error("No image URL found in sessionStorage.");
+//     }
+//   }, [
+//     setOriginalImageDimensions,
+//     setOriginalImageUrl,
+//     setOriginalImageData,
+//     imageDownloaded, // Add dependency
+//   ]);
+
+//   // Function to download the image automatically
+//   const downloadImage = (blob) => {
+//     const url = URL.createObjectURL(blob);
+//     const link = document.createElement("a");
+//     link.href = url;
+//     link.download = "downloaded_image.png"; // Set the default filename
+//     document.body.appendChild(link);
+//     link.click();
+//     document.body.removeChild(link);
+//     URL.revokeObjectURL(url); // Clean up the URL object
+//   };
+
+//   const handleSaveImage = async () => {
+//     if (mapName.trim() === "") {
+//       setPopupMessage("Please enter the file name first.");
+//       setShowPopup(true);
+//       setTimeout(() => {
+//         setShowPopup(false);
+//       }, 2000);
+//     } else {
+//       const response = await fetch(maskImageUrl);
+//       const imageBlob = await response.blob();
+//       const imageFile = new File([imageBlob], `${mapName}.png`, {
+//         type: "image/png",
+//       });
+
+//       const formData = new FormData();
+//       formData.append("name", mapName);
+//       formData.append("image", imageFile);
+
+//       const result = await fetch("http://localhost:5000/api/images", {
+//         method: "POST",
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: formData,
+//       });
+
+//       if (result.ok) {
+//         setIsFileSaved(true);
+//         setPopupMessage("File Saved!");
+//       } else {
+//         setPopupMessage("Error saving the file");
+//       }
+
+//       setShowPopup(true);
+//       setTimeout(() => {
+//         setShowPopup(false);
+//       }, 2000);
+//     }
+//   };
+
+//   const handleRequirementForm = () => {
+//     if (isFileSaved) {
+//       navigate("/gallery", {
+//         state: { image: mapPreviewImage, name: mapName },
+//       });
+//     } else {
+//       setPopupMessage("Please save the file first.");
+//       setShowPopup(true);
+//       setTimeout(() => {
+//         setShowPopup(false);
+//       }, 2000);
+//     }
+//   };
+
+//   const handleRegenerate = () => {
+//     navigate("/regenerate");
+//   };
+
+//   return (
+//     <div className={styles.previewContainer}>
+//       <div className={styles.content}>
+//         <h1 className={styles.previewTitle}>Preview Map</h1>
+
+//         <TransformWrapper initialScale={1}>
+//           {({ zoomIn, zoomOut, resetTransform }) => (
+//             <>
+//               <div className={styles.mapPreview}>
+//                 <TransformComponent>
+//                   {maskImageUrl ? (
+//                     <img
+//                       src={maskImageUrl}
+//                       alt="Map Preview"
+//                       className={styles.mapImage}
+//                       ref={imageRef}
+//                       style={{
+//                         width: `${imageDimensions.width}px`,
+//                         height: `${imageDimensions.height}px`,
+//                         objectFit: "contain", // Keep aspect ratio of the image
+//                       }}
+//                     />
+//                   ) : (
+//                     <img
+//                       src={mapPreviewImage}
+//                       alt="Map Preview"
+//                       className={styles.mapImage}
+//                       style={{
+//                         objectFit: "contain",
+//                       }}
+//                     />
+//                   )}
+//                 </TransformComponent>
+//               </div>
+//               <div className={styles.newControls}>
+//                 <input
+//                   type="text"
+//                   placeholder="Enter map name"
+//                   value={mapName}
+//                   onChange={(e) => setMapName(e.target.value)}
+//                   className={styles.mapNameInput}
+//                 />
+//                 <button onClick={handleSaveImage} className={styles.saveButton}>
+//                   Save Image
+//                 </button>
+//                 {/* Zoom Controls */}
+//                 <button onClick={() => zoomIn()} className={styles.zoomButton}>
+//                   Zoom In
+//                 </button>
+//                 <button onClick={() => zoomOut()} className={styles.zoomButton}>
+//                   Zoom Out
+//                 </button>
+//                 <button
+//                   onClick={() => resetTransform()}
+//                   className={styles.zoomButton}
+//                 >
+//                   Reset
+//                 </button>
+//               </div>
+//             </>
+//           )}
+//         </TransformWrapper>
+//       </div>
+
+//       <div className={styles.buttonContainer}>
+//         <button
+//           onClick={handleRequirementForm}
+//           className={styles.galleryButton}
+//         >
+//           Gallery
+//         </button>
+//         <button onClick={handleRegenerate} className={styles.regenerateButton}>
+//           Regenerate
+//         </button>
+//       </div>
+//       {showPopup && <div className={styles.popup}>{popupMessage}</div>}
+//     </div>
+//   );
+// };
+
+// export default PreviewPage;

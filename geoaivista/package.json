@@ -24,7 +24,8 @@
     "react-dom": "^18.2.0",
     "react-konva": "^18.2.10",
     "react-router-dom": "^6.23.1",
-    "react-use-image": "^0.2.3"
+    "react-use-image": "^0.2.3",
+    "react-zoom-pan-pinch": "^3.6.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",

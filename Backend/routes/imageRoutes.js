@@ -16,7 +16,9 @@ const {
   getAllGeneratedImage, 
   getAllGeneratedImagesByEmail, 
   getAllImagesOtherThanGenerated, 
-  getAllImagesOtherThanGeneratedByEmail 
+  getAllImagesOtherThanGeneratedByEmail,
+  saveGeneratedImageByEmail,
+  addGeneratedImage
 } = require('../controllers/imageController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -28,12 +30,17 @@ router.route('/')
   .post(protect, uploadImage, addImage); // Upload and add a new image
 
 // Route to get all generated images
-router.route('/generated')
-  .get(protect, getAllGeneratedImage); // Get all images of type 'generatedImage'
+router.post('/generated', protect, uploadImage, addGeneratedImage);
 
 // Route to get all generated images by email
 router.route('/generated/email')
   .post(protect, getAllGeneratedImagesByEmail); // Get all 'generatedImage' images by user email
+
+  // router.route('/generated/save')
+  // .post(protect, saveGeneratedImageByEmail);
+// POST /api/generated/save
+router.post("/generated/save", protect, saveGeneratedImageByEmail);
+
 
 // Route to get all images except 'generatedImage'
 router.route('/other-than-generated')

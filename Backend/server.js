@@ -6,6 +6,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const userRoutes = require("./routes/userRoutes");
 const imageRoutes = require("./routes/imageRoutes");
+const mapRoutes = require("./routes/mapRoutes");
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/users", userRoutes);
 app.use("/api/images", imageRoutes);
+app.use("api/maps",mapRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

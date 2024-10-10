@@ -10,15 +10,13 @@ export function useUser() {
 }
 
 export function UserProvider({ children }) {
-  // Existing states for token and login management
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem("token"));
-
-  // New state for handling the uploaded image globally
   const [uploadedImage, setUploadedImage] = useState(null);
-
-  // New state for handling the invisible layer
-  const [invisibleLayer, setInvisibleLayer] = useState(null); // Add this
+  const [invisibleLayer, setInvisibleLayer] = useState(null);
+  const [originalImageDimensions, setOriginalImageDimensions] = useState(null); // Store original image dimensions
+  const [originalImageUrl, setOriginalImageUrl] = useState(null); // Store original image URL for downloading
+  const [originalImageData, setOriginalImageData] = useState(null); // Store original image data (Blob or File)
 
   useEffect(() => {
     if (token) {
@@ -37,10 +35,16 @@ export function UserProvider({ children }) {
         setToken,
         loggedIn,
         setLoggedIn,
-        uploadedImage, // Expose uploadedImage in context
-        setUploadedImage, // Expose function to set the uploaded image
-        invisibleLayer, // Expose invisible layer in context
-        setInvisibleLayer, // Expose function to set the invisible layer
+        uploadedImage,
+        setUploadedImage,
+        invisibleLayer,
+        setInvisibleLayer,
+        originalImageDimensions,
+        setOriginalImageDimensions,
+        originalImageUrl,
+        setOriginalImageUrl,
+        originalImageData,
+        setOriginalImageData,
       }}
     >
       {children}
@@ -48,7 +52,6 @@ export function UserProvider({ children }) {
   );
 }
 
-// Add propTypes validation
 UserProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
