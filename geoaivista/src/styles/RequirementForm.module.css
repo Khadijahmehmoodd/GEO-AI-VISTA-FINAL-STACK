@@ -1,177 +1,352 @@
-/** @format */
-
+/* Background */
 .background {
 	background-image: url("../assets/RequirementForm.jpg");
 	background-size: cover;
 	background-position: center;
 	width: 100%;
-	height: 100vh;
+	min-height: 100vh;
 	display: flex;
 	justify-content: center;
 	align-items: center;
-}
-
-.formContainer {
+  }
+  
+  /* Form Container */
+  .formContainer {
 	background-color: rgba(0, 0, 0, 0.9);
 	padding: 20px;
 	border-radius: 30px;
-	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 	max-width: 900px;
 	text-align: center;
-	height: auto;
-
 	display: flex;
 	flex-direction: column;
-	justify-content: center;
 	align-items: center;
-}
-
-.title {
+	position: relative;
+	z-index: 1; /* Ensure it's above the overlay */
+  }
+  
+  /* Titles */
+  .title {
 	color: #45a049;
 	font-size: 2rem;
 	margin-bottom: 10px;
-}
-
-.subtitle {
+  }
+  
+  .subtitle {
 	color: #fff;
 	font-size: 16px;
 	margin-bottom: 20px;
-}
-
-.imageEditor {
+  }
+  
+  /* Image Editor */
+  .imageEditor {
 	width: 100%;
-	max-width: 800px;
-	height: 700px; /* Adjust height for editor */
-	background-color: #ffffff; /* Dark background for the editor */
+	background-color: #ffffff;
+	display: flex;
+	flex-direction: column;
+	margin-top: 20px;
+	border-radius: 15px;
+	padding: 10px;
+	align-items: center;
+  }
+  
+  /* Editor Content */
+  .editorContent {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: flex-start;
+	position: relative; /* Necessary for absolute positioning of the sidebar */
+	/* Removed overflow: hidden; */
+  }
+  
+  /* Left Panel */
+  .leftPanel {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+  }
+  
+  /* Toolbar */
+  .toolbar {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: center;
+	margin-bottom: 20px;
+  }
+  
+  .toolbarBtn {
+	padding: 10px 20px;
+	font-size: 16px;
+	background-color: #2196f3;
+	background-image: linear-gradient(to right, #2196f3, #21cbf3);
+	color: white;
+	border: none;
+	border-radius: 30px;
+	cursor: pointer;
+	margin: 5px;
+	transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .toolbarBtn:hover {
+	background-color: #2980b9;
+	transform: translateY(-2px);
+	box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .toolbarBtn:active {
+	transform: translateY(0);
+	box-shadow: none;
+  }
+  
+  .toolbarBtn:disabled {
+	background-color: #cccccc;
+	cursor: not-allowed;
+  }
+  
+  /* Finish Button */
+  .finishButton {
+	background-color: #e91e63;
+	background-image: linear-gradient(to right, #f06292, #e91e63);
+  }
+  
+  .finishButton:hover {
+	background-color: #d81b60;
+  }
+  
+  /* Canvas Container */
+  .canvasContainer {
+	border: 1px solid #ddd;
+	display: inline-block;
+	max-width: 100%;
+	overflow: hidden;
+  }
+  
+  .canvasContainer canvas {
+	max-width: 100%;
+	height: auto;
+	display: block;
+  }
+  
+  /* Sidebar */
+  .sidebar {
+	position: absolute;
+	top: 0;
+	right: -1%;
+	width: 300px; /* Slightly wider for better spacing */
+	height: 100%;
+	background-color: #2c3e50; /* Dark blue */
+	box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+	padding: 20px;
+	transform: translateX(100%); /* Start hidden off-screen to the right */
+	transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+	z-index: 1000; /* Ensure the sidebar is above other elements */
+	color: #ecf0f1; /* Light text color */
+  }
+  
+  .sidebarOpen {
+	transform: translateX(0); /* Move into view */
+	/* Removed visibility and z-index modifications */
+ visibility: hidden;
+  }
+  
+  /* Close Button */
+  .closeButton {
+	position: absolute;
+	top: 15px;
+	right: 15px;
+	background: none;
+	border: none;
+	color: #ecf0f1;
+	font-size: 2rem;
+	cursor: pointer;
+  }
+  
+  .closeButton:hover {
+	color: #e74c3c; /* Change color on hover */
+  }
+  
+  /* Brush Settings */
+  .brushSettings {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	padding-top: 60px; /* Space for close button */
+  }
+  
+  .brushSettings h3 {
+	margin-bottom: 20px;
+	color: #ecf0f1;
+	font-size: 1.8rem;
+	font-weight: 600;
+  }
+  
+  .brushSettings label {
+	margin-bottom: 10px;
+	font-weight: 500;
+	color: #bdc3c7; /* Slightly lighter color for labels */
+  }
+  
+  .brushSettings input[type="color"],
+  .brushSettings input[type="range"] {
+	margin-bottom: 20px;
+	width: 100%;
+  }
+  
+  /* Input Styles */
+  .brushSettings input[type="color"] {
+	height: 40px;
+	border: none;
+	outline: none;
+	cursor: pointer;
+	background-color: #34495e; /* Darker background */
+	border-radius: 5px;
+  }
+  
+  .brushSettings input[type="color"]::-webkit-color-swatch-wrapper {
+	padding: 0;
+  }
+  
+  .brushSettings input[type="color"]::-webkit-color-swatch {
+	border: none;
+	border-radius: 5px;
+  }
+  
+  .brushSettings input[type="range"] {
+	-webkit-appearance: none;
+	background-color: #34495e;
+	height: 6px;
+	border-radius: 5px;
+	outline: none;
+  }
+  
+  .brushSettings input[type="range"]::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	background-color: #ecf0f1;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	cursor: pointer;
+  }
+  
+  .brushSettings input[type="range"]::-moz-range-thumb {
+	background-color: #ecf0f1;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	cursor: pointer;
+  }
+  
+  /* Icon Style */
+  .icon {
+	margin-right: 8px;
+	color: #ecf0f1;
+  }
+  
+  /* Overlay */
+  .overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.5);
+	z-index: 999; /* Just below the sidebar */
+  }
+  
+  /* Adjust z-index values */
+  .formContainer {
+	position: relative;
+	z-index: 1;
+  }
+  
+  /* Hover Effects */
+  .brushSettings input[type="color"]:hover {
+	background-color: #3b5998;
+  }
+  
+  .brushSettings input[type="range"]::-webkit-slider-thumb:hover {
+	background-color: #bdc3c7;
+  }
+  
+  .toolbarBtn:hover {
+	background-color: #2980b9;
+	transform: translateY(-2px);
+	box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .toolbarBtn:active {
+	transform: translateY(0);
+	box-shadow: none;
+  }
+  
+  /* Submit Button */
+  .submitButton {
+	padding: 10px 20px;
+	font-size: 16px;
+	background-color: #4caf50;
+	background-image: linear-gradient(to right, #4caf50, #45a049);
+	color: white;
+	border: none;
+	border-radius: 30px;
+	cursor: pointer;
+	margin-top: 40px;
+	transition: transform 0.2s, background-color 0.2s;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .submitButton:hover {
+	background-color: #45a049;
+	transform: translateY(-2px);
+	box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+
+  /* ... existing styles ... */
+
+/* Loading Overlay */
+.loadingOverlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
-	margin-top: 20px;
-	border-radius: 15px;
-	position: relative;
-	overflow: hidden;
-}
-
-.canvas-container {
-	width: 700px;
-	height: 500px;
-	border: 1px solid #ddd; /* Border around the canvas */
-}
-
-.toolbar {
-	width: 100%;
-	display: flex;
-	justify-content: space-around; /* Spread out the toolbar items */
+	z-index: 2000; /* Higher than other elements */
+  }
+  
+  /* Loading Spinner */
+  .loadingSpinner {
+	border: 16px solid #f3f3f3; /* Light grey */
+	border-top: 16px solid #3498db; /* Blue */
+	border-radius: 50%;
+	width: 120px;
+	height: 120px;
+	animation: spin 2s linear infinite;
 	margin-bottom: 20px;
-	margin-top: 10px;
-}
-
-.brush-settings {
-	display: flex;
-	align-items: center;
-}
-
-
-.undo-btn .undo-icon {
-	font-size: 24px !important; /* Add !important to ensure it overrides other styles */
-	color: #000000 !important; /* Make sure the color is black */
   }
   
-.brush-settings input[type="color"] {
-	border: none;
-	cursor: pointer;
-	margin-left: 10px;
-}
-
-.brush-settings input[type="range"] {
-	width: 100px;
-	cursor: pointer;
-	margin-left: 10px;
-}
-
-.submitButton {
-	padding: 10px 20px;
-	font-size: 16px;
-	background-color: #3d8540;
-	color: white;
-	border: none;
-	border-radius: 3rem;
-	cursor: pointer;
-	margin-top: 40px;
-}
-
-.submitButton:hover {
-	background-color: rgba(69, 160, 73);
-	box-shadow: inset 0 0 0 2px #012d18 !important;
-	box-shadow: 10px 10px 105px -10px rgb(2, 96, 52) !important;
-	transform: scale(0.96);
-}
-
-
-
-
-.imageEditor {
-	display: flex;
-	justify-content: center;
-	align-items: flex-start;
-	flex-direction: row; /* Layout in a row to allow space for the toolbar */
-	background-color: #ffffff;
-	margin-top: 20px;
-	border-radius: 15px;
-	padding: 10px; /* Optional padding */
+  /* Loading Text */
+  .loadingText {
+	color: #fff;
+	font-size: 1.5rem;
+	text-align: center;
+	max-width: 80%;
+	margin: 0 auto;
   }
   
-  .canvas-container {
-	max-width: 100%; /* Ensure it takes the full width available */
-	max-height: 80vh; /* Limit the maximum height to 80% of the viewport height */
-	width: auto; /* Let the width adjust automatically */
-	height: auto; /* Let the height adjust automatically */
-	border: 1px solid #ddd;
-  }
-  
-  .toolbar {
-	display: flex;
-	flex-direction: column; /* Stack items vertically */
-	justify-content: flex-start; /* Align items at the top */
-	margin-left: 20px; /* Add space between the image and the toolbar */
-  }
-  
-  .toolbar button, .toolbar .brush-settings {
-	margin-bottom: 20px; /* Add space between toolbar items */
-  }
-  
-  @media screen and (max-width: 768px) {
-	/* For smaller screens, stack the image and toolbar vertically */
-	.imageEditor {
-	  flex-direction: column; /* Stack vertically */
-	  align-items: center;
+  /* Spinner Animation */
+  @keyframes spin {
+	0% {
+	  transform: rotate(0deg);
 	}
-  
-	.toolbar {
-	  margin-left: 0; /* Remove the margin when stacking */
-	  margin-top: 20px; /* Add margin to the top instead */
+	100% {
+	  transform: rotate(360deg);
 	}
   }
   
-
-  .toolbar-btn {
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #3d8540;
-    color: white;
-    border: none;
-    border-radius: 3rem;
-    cursor: pointer;
-    margin-bottom: 20px; /* Add space between the buttons */
-    margin-right: 10px; /* Optional: If you want some space between horizontally aligned buttons */
-    transition: transform 0.2s, background-color 0.2s; /* Smooth hover transition */
-}
-
-.toolbar-btn:hover {
-    background-color: rgba(69, 160, 73);
-    box-shadow: inset 0 0 0 2px #012d18 !important;
-    box-shadow: 10px 10px 105px -10px rgb(2, 96, 52) !important;
-    transform: scale(0.96); /* Add hover effect */
-}
-
