@@ -5,13 +5,12 @@ import {
   faBrush,
 } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect, useRef } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { useUser } from "../../context/UserContext";
 import { Stage, Layer, Image as KonvaImage, Line, Circle } from "react-konva";
+import axios from "axios"; // Axios for sending images to the backend
+import { useUser } from "../../context/UserContext"; // Import useUser
 import styles from "../../styles/RequirementForm.module.css";
 
-const RequirementForm = () => {
+const RegeneratePage = () => {
   const [tool, setTool] = useState(""); // 'marker', 'pin', or ''
   const [isOperationActive, setIsOperationActive] = useState(false);
   const [points, setPoints] = useState([]);
@@ -23,36 +22,58 @@ const RequirementForm = () => {
   const isDrawing = useRef(false);
   const stageRef = useRef(null);
   const invisibleLayerRef = useRef(null);
-  const navigate = useNavigate();
-  const { uploadedImage, setInvisibleLayer } = useUser();
   const [image, setImage] = useState(null);
   const [imageDimensions, setImageDimensions] = useState({
     width: 0,
     height: 0,
   });
 
-  const [scaleFactor, setScaleFactor] = useState(1);
+  // Get generatedImage and its setter from context
+  const { generatedImage, setGeneratedImage } = useUser();
 
-  // Load the uploaded image into an Image object
   useEffect(() => {
-    if (uploadedImage) {
+    if (generatedImage) {
+      const imageUrl = URL.createObjectURL(generatedImage);
       const img = new window.Image();
-      img.src = URL.createObjectURL(uploadedImage);
+      img.src = imageUrl;
+
       img.onload = () => {
-        const maxWidth = 800; // maximum width for the image
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const maxWidth = viewportWidth * 0.8; // 80% of the viewport width
+        const maxHeight = viewportHeight * 0.8; // 80% of the viewport height
+
         let scale = 1;
-        if (img.width > maxWidth) {
-          scale = maxWidth / img.width;
+        if (img.width > maxWidth || img.height > maxHeight) {
+          const widthScale = maxWidth / img.width;
+          const heightScale = maxHeight / img.height;
+          scale = Math.min(widthScale, heightScale); // Maintain aspect ratio
         }
+
         setImage(img);
         setImageDimensions({
           width: img.width * scale,
           height: img.height * scale,
         });
-        setScaleFactor(scale);
       };
+    } else {
+      console.error("No generated image available in context.");
     }
-  }, [uploadedImage]);
+  }, [generatedImage]);
+
+  // Helper function to convert dataURL to Blob
+  const dataURLToBlob = (dataURL) => {
+    const byteString = atob(dataURL.split(",")[1]);
+    const mimeString = dataURL.split(",")[0].split(":")[1].split(";")[0];
+    const buffer = new ArrayBuffer(byteString.length);
+    const intArray = new Uint8Array(buffer);
+
+    for (let i = 0; i < byteString.length; i++) {
+      intArray[i] = byteString.charCodeAt(i);
+    }
+
+    return new Blob([buffer], { type: mimeString });
+  };
 
   // Function to handle tool selection
   const handleToolSelect = (selectedTool) => {
@@ -75,7 +96,6 @@ const RequirementForm = () => {
     const pointerPosition = stage.getPointerPosition();
 
     if (tool === "pin") {
-      // Add a point
       setPoints((prevPoints) => {
         const updatedPoints = [...prevPoints, pointerPosition];
         setActions((prevActions) => [
@@ -85,7 +105,6 @@ const RequirementForm = () => {
         return updatedPoints;
       });
     } else if (tool === "marker") {
-      // Start drawing
       isDrawing.current = true;
       const newLine = [pointerPosition];
       setLines((prevLines) => [...prevLines, newLine]);
@@ -118,7 +137,6 @@ const RequirementForm = () => {
   const handleMouseUp = () => {
     if (tool === "marker") {
       isDrawing.current = false;
-      // Operation remains active until user clicks "Finish"
     }
   };
 
@@ -142,18 +160,24 @@ const RequirementForm = () => {
     }
   };
 
-  // Function to handle form submission
-  const handleSubmit = async () => {
+  // Function to handle regeneration
+  const handleRegenerate = async () => {
+    if (!generatedImage) {
+      console.error("No generated image available for regeneration.");
+      return;
+    }
+
     setIsLoading(true); // Show loading indicator
 
     const invisibleLayer = invisibleLayerRef.current.toDataURL();
-    setInvisibleLayer(invisibleLayer);
 
     // Convert dataURL to Blob
     const maskBlob = dataURLToBlob(invisibleLayer);
     const formData = new FormData();
-    formData.append("image", uploadedImage);
     formData.append("mask", maskBlob, "mask.png");
+
+    // Append the generated image
+    formData.append("image", generatedImage, "generatedImage.png");
 
     try {
       const response = await axios.post(
@@ -165,48 +189,37 @@ const RequirementForm = () => {
         }
       );
 
-      // Call the downloadImages function after the response is received
-      downloadOriginalImage(); // Download the original image
+      // Handle the response
+      const newGeneratedImageBlob = response.data;
+      setGeneratedImage(newGeneratedImageBlob); // Update the generated image in context
+
+      // Update the displayed image
+      const imageUrl = URL.createObjectURL(newGeneratedImageBlob);
+      const img = new window.Image();
+      img.src = imageUrl;
+
+      img.onload = () => {
+        setImage(img);
+        setImageDimensions({
+          width: img.width,
+          height: img.height,
+        });
+      };
+
+      // Optionally download the new image
+      // downloadImage(newGeneratedImageBlob);
     } catch (error) {
       console.error("Error uploading files.", error);
     }
 
-    // Wait for 5 seconds before navigating
-    setTimeout(() => {
-      setIsLoading(false); // Hide loading indicator
-      navigate("/preview");
-    }, 5000);
-  };
-
-  // Function to download the original image
-  const downloadOriginalImage = () => {
-    const link = document.createElement("a");
-    link.href = image.src; // Use the original image's src
-    link.download = "originalImage.png"; // Name for the original image
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  // Helper function to convert dataURL to Blob
-  const dataURLToBlob = (dataURL) => {
-    const byteString = atob(dataURL.split(",")[1]);
-    const mimeString = dataURL.split(",")[0].split(":")[1].split(";")[0];
-    const buffer = new ArrayBuffer(byteString.length);
-    const intArray = new Uint8Array(buffer);
-
-    for (let i = 0; i < byteString.length; i++) {
-      intArray[i] = byteString.charCodeAt(i);
-    }
-
-    return new Blob([buffer], { type: mimeString });
+    setIsLoading(false); // Hide loading indicator after regeneration
   };
 
   return (
     <div className={styles.background}>
       <div className={styles.formContainer}>
-        <h1 className={styles.title}>Land Use Planning Requirements</h1>
-        <p className={styles.subtitle}>Edit your Image Here</p>
+        <h1 className={styles.title}>Regenerate Your Image</h1>
+        <p className={styles.subtitle}>Edit the generated image here</p>
 
         <div className={styles.imageEditor}>
           {image ? (
@@ -387,21 +400,19 @@ const RequirementForm = () => {
               </div>
             </div>
           ) : (
-            <p>No image uploaded</p>
+            <p>Loading image...</p>
           )}
         </div>
 
-        <button className={styles.submitButton} onClick={handleSubmit}>
-          Submit
+        {/* Regenerate Button at the Bottom */}
+        <button className={styles.submitButton} onClick={handleRegenerate}>
+          Regenerate
         </button>
 
-        {/* Loading Indicator */}
         {isLoading && (
           <div className={styles.loadingOverlay}>
             <div className={styles.loadingSpinner}></div>
-            <p className={styles.loadingText}>
-              Please wait while we are generating your map...
-            </p>
+            <p className={styles.loadingText}>Regenerating the image...</p>
           </div>
         )}
       </div>
@@ -409,4 +420,4 @@ const RequirementForm = () => {
   );
 };
 
-export default RequirementForm;
+export default RegeneratePage;

@@ -17,14 +17,17 @@
     "@pqina/react-pintura": "^9.0.3",
     "axios": "^1.7.7",
     "bootstrap": "^5.3.3",
+    "file-saver": "^2.0.5",
     "konva": "^9.3.15",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.2",
     "react-dom": "^18.2.0",
     "react-konva": "^18.2.10",
+    "react-medium-image-zoom": "^5.2.10",
     "react-router-dom": "^6.23.1",
-    "react-use-image": "^0.2.3"
+    "react-use-image": "^0.2.3",
+    "react-zoom-pan-pinch": "^3.6.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",

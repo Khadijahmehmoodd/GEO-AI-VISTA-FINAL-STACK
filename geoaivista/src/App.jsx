@@ -12,6 +12,7 @@ import LandingPage from "./pages/LandingPage/LandingPage";
 import AboutUs from "./pages/AboutUs/AboutUs"; // Adjust the path if necessary
 import RequirementForm from "./pages/RequirementForm/RequirementForm";
 import Gallery from "./pages/Gallery/Gallery";
+import Regenerate from "./pages/Regenerate/regenerate";
 // import RooftopDetection from "./pages/Rooftop/RooftopDetection";
 
 // Import UserProvider to wrap the app
@@ -21,8 +22,6 @@ import { UserProvider } from "./context/UserContext";
 function App() {
   return (
     <UserProvider>
-      {" "}
-      {/* Wrap the entire app in UserProvider */}
       <Router>
         <Navbar />
         <main>
@@ -32,12 +31,11 @@ function App() {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/home" element={<Home />} />
             <Route path="/preview" element={<PreviewMap />} />
-            <Route path="/about-us" element={<AboutUs />} />{" "}
-            {/* Add this line */}
+            <Route path="/about-us" element={<AboutUs />} />
             <Route path="/requirementform" element={<RequirementForm />} />
-            {/* <Route path="/rooftopdetection" element={<RooftopDetection />} /> */}
             <Route path="/gallery" element={<Gallery />} />
-            {/* Add ImageMaskEditor route */}
+            {/* Add the Regenerate route */}
+            <Route path="/regenerate" element={<Regenerate />} />
           </Routes>
         </main>
         <Footer />
