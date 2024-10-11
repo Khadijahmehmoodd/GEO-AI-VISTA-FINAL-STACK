@@ -7,7 +7,7 @@ import styles from "../../styles/Login.module.css";
 import { useUser } from "../../context/UserContext";
 
 export default function Login() {
-	const { setToken, setLoggedIn } = useUser();
+	const { setToken, setLoggedIn, setEmail } = useUser();
 
 	const emailRef = useRef();
 	const passwordRef = useRef();
@@ -42,6 +42,9 @@ export default function Login() {
 				const data = await response.json();
 				setToken(data.token);
 				setLoggedIn(true);
+				setEmail(email);
+
+				localStorage.setItem("userEmail", email);
 			}
 		} catch (error) {
 			console.error("Error:", error);

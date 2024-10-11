@@ -5,7 +5,7 @@ import styles from "../../styles/Home.module.css";
 import { useUser } from "../../context/UserContext";
 
 const Home = () => {
-  const { token, setToken, loggedIn, setLoggedIn } = useUser();
+  const { token, setToken, setLoggedIn } = useUser();
   const [image, setImage] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [alertMessage, setAlertMessage] = useState("");
@@ -23,14 +23,6 @@ const Home = () => {
     setImage(null);
     window.location.reload();
   };
-  const handleRooftopDetection = () => {
-    
-    navigate("rooftopdetection");  // Navigate directly to the route
-  
-  
-  
-};
-
 
   const handleUpload = async () => {
     if (image) {
